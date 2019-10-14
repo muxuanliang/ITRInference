@@ -105,7 +105,7 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
       prediction$control <- predict(fit$control, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$control]))
     }
     if (sum(supp$treatment) == 0){
-      prediction$treatment <- rep(fit$control$coefficients, times=length(data$outcome[sampleSplitIndex]))
+      prediction$treatment <- rep(fit$treatment$coefficients, times=length(data$outcome[sampleSplitIndex]))
     } else {
       prediction$treatment <- predict(fit$treatment, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$treatment]))
     }
