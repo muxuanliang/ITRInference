@@ -99,8 +99,16 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
   if ((method == 'lm')||(method == 'glmnet')){
     fit$control <- lm(outcomeFormula(supp$control), data = dataControl)
     fit$treatment <- lm(outcomeFormula(supp$treatment), data = dataTreatment)
-    prediction$control <- predict(fit$control, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$control]))
-    prediction$treatment <- predict(fit$treatment, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$treatment]))
+    if (sum(supp$control) == 0){
+      prediction$control <- rep(fit$control$coefficients, times=length(data$outcome[sampleSplitIndex]))
+    } else {
+      prediction$control <- predict(fit$control, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$control]))
+    }
+    if (sum(supp$treatment) == 0){
+      prediction$treatment <- rep(fit$control$coefficients, times=length(data$outcome[sampleSplitIndex]))
+    } else {
+      prediction$treatment <- predict(fit$treatment, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$treatment]))
+    }
   } else if (method == 'kernel') {
     prediction$control[sampleSplitIndex] <- ks(dataControl$predictor, dataControl$outcome, data$predictor[sampleSplitIndex,supp$control])
     prediction$treatment[sampleSplitIndex] <- ks(dataTreatment$predictor, dataTreatment$outcome, data$predictor[sampleSplitIndex,supp$control])
