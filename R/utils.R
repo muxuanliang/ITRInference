@@ -78,10 +78,10 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
   if ((0.5*size < p) || (method == 'glmnet')) {
     fit$control <- cv.glmnet(x = dataControl$predictor, y = dataControl$outcome)
     fit$treatment <- cv.glmnet(x = dataTreatment$predictor, y = dataTreatment$outcome)
-    prediction$control <- predict(fit$control, newx = data$predictor[sampleSplitIndex,], s=fit$control$lambda.min)
-    prediction$treatment <- predict(fit$treatment, newx = data$predictor[sampleSplitIndex,], s=fit$treatment$lambda.min)
-    supp$control <- abs(fit$control$glmnet.fit$beta[,fit$control$glmnet.fit$lambda==fit$control$lambda.min])>0
-    supp$treatment <- abs(fit$treatment$glmnet.fit$beta[,fit$treatment$glmnet.fit$lambda==fit$treatment$lambda.min])>0
+    prediction$control <- predict(fit$control, newx = data$predictor[sampleSplitIndex,], s=fit$control$lambda.1se)
+    prediction$treatment <- predict(fit$treatment, newx = data$predictor[sampleSplitIndex,], s=fit$treatment$lambda.1se)
+    supp$control <- abs(fit$control$glmnet.fit$beta[,fit$control$glmnet.fit$lambda==fit$control$lambda.1se])>0
+    supp$treatment <- abs(fit$treatment$glmnet.fit$beta[,fit$treatment$glmnet.fit$lambda==fit$treatment$lambda.1se])>0
     dataControl$predictor <- dataControl$predictor[,supp$control]
     dataTreatment$predictor <- dataTreatment$predictor[,supp$treatment]
   }
@@ -158,8 +158,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE){
       fit_w[[index]] <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = FALSE, standardize = FALSE)
       w_est <- fit_w[[index]]$glmnet.fit$beta[,fit_w[[index]]$lambda==fit_w[[index]]$lambda.min]
       # set beta null
-      betaNULL <- itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min]
-      betaNULL[index] <- 0
+      betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
+      betaNULL[index,1] <- 0
       linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$glmnet.fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-pseudoPredictor%*%w_est)
@@ -178,8 +178,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE){
       fit_w <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = FALSE, standardize = FALSE)
       w_est <- fit_w$glmnet.fit$beta[,fit_w$lambda==fit_w$lambda.min]
       # set beta null
-      betaNULL <- itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min]
-      betaNULL[index] <- 0
+      betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
+      betaNULL[index,1] <- 0
       linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$glmnet.fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL,loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-pseudoPredictor%*%w_est)
