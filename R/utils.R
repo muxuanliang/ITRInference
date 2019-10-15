@@ -78,10 +78,10 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
   if ((0.5*size < p) || (method == 'glmnet')) {
     fit$control <- cv.glmnet(x = dataControl$predictor, y = dataControl$outcome)
     fit$treatment <- cv.glmnet(x = dataTreatment$predictor, y = dataTreatment$outcome)
-    prediction$control <- predict(fit$control, newx = data$predictor[sampleSplitIndex,], s=fit$control$lambda.min)
-    prediction$treatment <- predict(fit$treatment, newx = data$predictor[sampleSplitIndex,], s=fit$treatment$lambda.min)
-    supp$control <- abs(fit$control$glmnet.fit$beta[,fit$control$glmnet.fit$lambda==fit$control$lambda.min])>0
-    supp$treatment <- abs(fit$treatment$glmnet.fit$beta[,fit$treatment$glmnet.fit$lambda==fit$treatment$lambda.min])>0
+    prediction$control <- predict(fit$control, newx = data$predictor[sampleSplitIndex,], s=fit$control$lambda.1se)
+    prediction$treatment <- predict(fit$treatment, newx = data$predictor[sampleSplitIndex,], s=fit$treatment$lambda.1se)
+    supp$control <- abs(fit$control$glmnet.fit$beta[,fit$control$glmnet.fit$lambda==fit$control$lambda.1se])>0
+    supp$treatment <- abs(fit$treatment$glmnet.fit$beta[,fit$treatment$glmnet.fit$lambda==fit$treatment$lambda.1se])>0
     dataControl$predictor <- dataControl$predictor[,supp$control]
     dataTreatment$predictor <- dataTreatment$predictor[,supp$treatment]
   }
@@ -105,7 +105,7 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
       prediction$control <- predict(fit$control, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$control]))
     }
     if (sum(supp$treatment) == 0){
-      prediction$treatment <- rep(fit$control$coefficients, times=length(data$outcome[sampleSplitIndex]))
+      prediction$treatment <- rep(fit$treatment$coefficients, times=length(data$outcome[sampleSplitIndex]))
     } else {
       prediction$treatment <- predict(fit$treatment, newdata = list(predictor=data$predictor[sampleSplitIndex,supp$treatment]))
     }
