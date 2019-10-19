@@ -1,7 +1,9 @@
 # ITRFit obtained the ITR. propensity is defined as p(T=1|X)
-ITRFit <- function(data, propensity, loss = c('logistic'), outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, intercept=FALSE){
+ITRFit <- function(data, propensity, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, intercept=FALSE){
   size <- dim(data$predictor)[1]
-  sampleSplitIndex <- (rnorm(size) > 0)
+  if(is.null(sampleSplitIndex)){
+    sampleSplitIndex <- (rnorm(size) > 0)
+  }
   predictedOutcome <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, outcomeFormula = outcomeFormula)
   workingDataset <- list(predictor = data$predictor[sampleSplitIndex,], treatment = data$treatment[sampleSplitIndex], outcome = data$outcome[sampleSplitIndex])
 
