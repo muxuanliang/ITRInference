@@ -1,14 +1,26 @@
 # ITRFit obtained the ITR. propensity is defined as p(T=1|X)
-ITRFit <- function(data, propensity, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, intercept=FALSE){
+ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
   }
-  predictedOutcome <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, outcomeFormula = outcomeFormula)
+  if (is.null(outcome)){
+    predictedOutcome <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, Formula = outcomeFormula)
+  } else {
+    predictedOutcome <- NULL
+    predictedOutcome$control <- outcome$control[sampleSplitIndex]
+    predictedOutcome$treatment <- outcome$treatment[sampleSplitIndex]
+  }
+  if (is.null(propensity)){
+    predictedPropensity <- getPropensityModel(data, method = propensityModel, sampleSplitIndex = sampleSplitIndex, Formula = propensityFormula)
+  } else {
+    predictedPropensity <- propensity[sampleSplitIndex]
+  }
+
   workingDataset <- list(predictor = data$predictor[sampleSplitIndex,], treatment = data$treatment[sampleSplitIndex], outcome = data$outcome[sampleSplitIndex])
 
-  robustOutcome_control <- (workingDataset$treatment == FALSE) * (workingDataset$outcome-predictedOutcome$control) / (1-propensity[sampleSplitIndex]) + predictedOutcome$control
-  robustOutcome_treatment <- (workingDataset$treatment == TRUE) * (workingDataset$outcome-predictedOutcome$treatment) / propensity[sampleSplitIndex] + predictedOutcome$treatment
+  robustOutcome_control <- (workingDataset$treatment == FALSE) * (workingDataset$outcome-predictedOutcome$control) / (1-predictedPropensity) + predictedOutcome$control
+  robustOutcome_treatment <- (workingDataset$treatment == TRUE) * (workingDataset$outcome-predictedOutcome$treatment) / predictedPropensity + predictedOutcome$treatment
   robustOutcome <- c(robustOutcome_control, robustOutcome_treatment)
   pseudoTreatment <- c(-sign(robustOutcome_control), sign(robustOutcome_treatment))
   pseudoWeight <- c(abs(robustOutcome_control), abs(robustOutcome_treatment))

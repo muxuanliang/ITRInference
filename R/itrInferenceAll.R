@@ -86,14 +86,21 @@
 # }
 
 # ITRFitAll obtained the ITR. propensity is defined as p(T=1|X)
-ITRFitAll <- function(data, propensity, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, intercept=FALSE, test=TRUE, parallel=FALSE){
+ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL,
+                      outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL,
+                      propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL,
+                      intercept=FALSE, test=TRUE, parallel=FALSE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
   }
   fit <- NULL
-  fit[[1]] <- ITRFit(data = data, propensity = propensity, loss = loss, sampleSplitIndex = sampleSplitIndex, outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, intercept = intercept)
-  fit[[2]] <- ITRFit(data = data, propensity = propensity, loss = loss, sampleSplitIndex = (!sampleSplitIndex), outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, intercept = intercept)
+  fit[[1]] <- ITRFit(data = data, propensity = propensity, outcome = outcome, loss = loss, sampleSplitIndex = sampleSplitIndex,
+                     outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, propensityModel = propensityModel,
+                     propensityFormula = propensityFormula, intercept = intercept)
+  fit[[2]] <- ITRFit(data = data, propensity = propensity, outcome = outcome, loss = loss, sampleSplitIndex = (!sampleSplitIndex),
+                     outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, propensityModel = propensityModel,
+                     propensityFormula = propensityFormula, intercept = intercept)
   if (test){
     score_1 <- scoreTest(fit[[1]], parallel=parallel)
     score_2 <- scoreTest(fit[[2]], parallel=parallel)
