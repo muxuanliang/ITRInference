@@ -5,17 +5,21 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
     sampleSplitIndex <- (rnorm(size) > 0)
   }
   if (is.null(outcome)){
-    predictedOutcome <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, Formula = outcomeFormula)
+    predictedOutcomeAll <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, Formula = outcomeFormula, predictAll = TRUE)
   } else {
-    predictedOutcome <- NULL
-    predictedOutcome$control <- outcome$control[sampleSplitIndex]
-    predictedOutcome$treatment <- outcome$treatment[sampleSplitIndex]
+    predictedOutcomeAll <- NULL
+    predictedOutcomeAll$control <- outcome$control
+    predictedOutcomeAll$treatment <- outcome$treatment
   }
+  predictedOutcome <- NULL
+  predictedOutcome$control <- predictedOutcomeAll$control[sampleSplitIndex]
+  predictedOutcome$treatment <- predictedOutcomeAll$treatment[sampleSplitIndex]
   if (is.null(propensity)){
-    predictedPropensity <- getPropensityModel(data, method = propensityModel, sampleSplitIndex = sampleSplitIndex, Formula = propensityFormula)
+    predictedPropensityAll <- getPropensityModel(data, method = propensityModel, sampleSplitIndex = sampleSplitIndex, Formula = propensityFormula, predictAll = TRUE)
   } else {
-    predictedPropensity <- propensity[sampleSplitIndex]
+    predictedPropensityAll <- propensity
   }
+  predictedPropensity <- predictedPropensityAll[sampleSplitIndex]
 
   workingDataset <- list(predictor = data$predictor[sampleSplitIndex,], treatment = data$treatment[sampleSplitIndex], outcome = data$outcome[sampleSplitIndex])
 
@@ -28,7 +32,18 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
   pseudoPredictor <- scale(pseudoPredictor)
   # We standardize first and set glmnet to not standardize
   if (loss == 'logistic'){
-    fit <- cv.glmnet(x=pseudoPredictor, y=as.factor(pseudoTreatment), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.factor(pseudoTreatment), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+    validate <- predict(fit, newx = data$predictor[!sampleSplitIndex,])
+    cvm <- apply(validate, 2, function(t){
+      weight <- predictedPropensityAll[!sampleSplitIndex]*(t>=0) + (1-predictedPropensityAll[!sampleSplitIndex])*(t<0)
+      predictedOutcome <- NULL
+      predictedOutcome$control <- predictedOutcomeAll$control[!sampleSplitIndex]
+      predictedOutcome$treatment <- predictedOutcomeAll$treatment[!sampleSplitIndex]
+      augment <- predictedOutcome$control*(t<0) + predictedOutcome$treatment * (t>=0)
+      score <- mean(data$outcome[!sampleSplitIndex]/weight * (t * (data$treatment[!sampleSplitIndex]-0.5)>0) + augment)
+      score
+    })
+    fit$lambda.min <- fit$lambda[which.max(cvm)]
   }
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoWeight = pseudoWeight, pseudoTreatment = pseudoTreatment, sampleSplitIndex=sampleSplitIndex)
 }
@@ -46,13 +61,13 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
       pseudoOutcome <- itrFit$pseudoPredictor[,index]
       pseudoWeight <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link,loss_type)
-      fit_w[[index]] <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = intercept, standardize = FALSE)
+      fit_w[[index]] <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = intercept, standardize = FALSE)
       link_w <- predict(fit_w[[index]], newx = pseudoPredictor, s=fit_w[[index]]$lambda.min)
       # set beta null
-      betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
+      betaNULL <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
       betaNULL[index,1] <- 0
       # get score under null
-      linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$glmnet.fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
+      linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
       score[index] <- mean(tmp) * 2
@@ -67,13 +82,13 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
       pseudoOutcome <- itrFit$pseudoPredictor[,index]
       pseudoWeight <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link,loss_type)
-      fit_w <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = FALSE, standardize = FALSE)
+      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = FALSE, standardize = FALSE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
-      betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
+      betaNULL <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
       betaNULL[index,1] <- 0
       # get score under null
-      linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$glmnet.fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
+      linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL,loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
       score <- mean(tmp) * 2

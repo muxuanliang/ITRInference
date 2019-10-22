@@ -55,11 +55,11 @@ ks <- function(xx, yy, xx.test){
 # model.gam gets the gam regression function given data
 model.gam <- function(data){
   p <- dim(data$predictor)[2]
-  expr <- "gam(outcome~"
+  expr <- "mgcv::gam(outcome~"
   for (i in 1:(p-1)){
-    expr <- paste0(expr, "s(predictor[i])+")
+    expr <- paste0(expr, "s(predictor[,",i,"])+")
   }
-  expr <- paste0(expr, "s(predictor[p]),method ='REML'")
+  expr <- paste0(expr, "s(predictor[,",p,"]), data = data,method ='REML')")
   expr
 }
 
@@ -82,19 +82,19 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
   if (0.05*size >= p){
     supp$control <- supp$treatment <- rep(TRUE, times = p)
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans1 <- screenIID(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = "SIRS")
-      ans2 <- screenIID(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = "DC-SIS")
+      ans1 <- VariableScreening::screenIID(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = "SIRS")
+      ans2 <- VariableScreening::screenIID(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = "DC-SIS")
       supp$control <- supp$treatment <- (ans1$rank <= 5)|(ans2$rank <= 5)
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
-    fit$control <- cv.glmnet(x = dataControl$predictor, y = dataControl$outcome)
-    fit$treatment <- cv.glmnet(x = dataTreatment$predictor, y = dataTreatment$outcome)
+    fit$control <- glmnet::cv.glmnet(x = dataControl$predictor, y = dataControl$outcome)
+    fit$treatment <- glmnet::cv.glmnet(x = dataTreatment$predictor, y = dataTreatment$outcome)
     supp$control <- abs(fit$control$glmnet.fit$beta[,fit$control$glmnet.fit$lambda==fit$control$lambda.min])>0
     supp$treatment <- abs(fit$treatment$glmnet.fit$beta[,fit$treatment$glmnet.fit$lambda==fit$treatment$lambda.min])>0
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans1 <- screenIID(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = "SIRS")
-      ans2 <- screenIID(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = "DC-SIS")
+      ans1 <- VariableScreening::screenIID(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = "SIRS")
+      ans2 <- VariableScreening::screenIID(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = "DC-SIS")
       supp$control <- supp$treatment <- (ans1$rank <= 5)|(ans2$rank <= 5)
     }
     dataControl$predictor <- dataControl$predictor[,supp$control]
@@ -165,15 +165,15 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
   if (0.05*size >= p){
     supp$control <- supp$treatment <- rep(TRUE, times = p)
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans <- screenIID(data$predictor, data$treatment, method = "SIRS")
+      ans <- VariableScreening::screenIID(data$predictor, data$treatment, method = "SIRS")
       supp <- (ans$rank <= 10)
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
-    fit <- cv.glmnet(x = dataTrain$predictor, y = dataTrain$treatment, family='binomial')
+    fit <- glmnet::cv.glmnet(x = dataTrain$predictor, y = dataTrain$treatment, family='binomial')
     supp <- abs(fit$glmnet.fit$beta[,fit$glmnet.fit$lambda==fit$lambda.min])>0
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans <- screenIID(data$predictor, data$treatment, method = "SIRS")
+      ans <- VariableScreening::screenIID(data$predictor, data$treatment, method = "SIRS")
       supp <- (ans$rank <= 10)
     }
     dataTrain$predictor <- dataTrain$predictor[,supp]

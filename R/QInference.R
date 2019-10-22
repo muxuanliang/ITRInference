@@ -4,7 +4,7 @@ QLearnFit <- function(data, intercept=FALSE){
   Outcome <- data$outcome
   Treatment <- (data$treatment - 0.5) * 2
   pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), data$predictor)
-  fit <- cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = intercept, standardize = TRUE)
+  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = intercept, standardize = TRUE)
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoTreatment = Treatment, pseudoOutcome = Outcome)
 }
 
@@ -19,7 +19,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
     for (index in indexToTest){
       pseudoPredictor <- qLearnFit$pseudoPredictor[,-index]
       pseudoOutcome <- qLearnFit$pseudoPredictor[,index]
-      fit_w[[index]] <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
+      fit_w[[index]] <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
       link_w <- predict(fit_w[[index]], newx = pseudoPredictor, s=fit_w[[index]]$lambda.min)
       # set beta null
       betaNULL <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min], c(p,1))
@@ -39,7 +39,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
     res <- foreach(index=indexToTest,.packages = 'glmnet') %dopar%{
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
       pseudoOutcome <- itrFit$pseudoPredictor[,index]
-      fit_w <- cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = FALSE, standardize = TRUE)
+      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = FALSE, standardize = TRUE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
       betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
@@ -48,7 +48,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - linkNULL
       tmp <- scoreWeight * (pseudoOutcome-link_w)
-      score <- mean(tmp) * 2
+      score <- mean(tmp)
       sigma <- sqrt(mean(tmp^2))
       list(fit_w = fit_w, score=score, sigma=sigma)
     }
