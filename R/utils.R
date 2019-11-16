@@ -166,7 +166,7 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
     supp$control <- supp$treatment <- rep(TRUE, times = p)
     if ((method != 'lm')&&(method != 'glmnet')){
       ans <- VariableScreening::screenIID(data$predictor, data$treatment, method = "SIRS")
-      supp <- (ans$rank <= 10)
+      supp <- (ans$rank <= 5)
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
@@ -174,7 +174,7 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
     supp <- abs(fit$glmnet.fit$beta[,fit$glmnet.fit$lambda==fit$lambda.min])>0
     if ((method != 'lm')&&(method != 'glmnet')){
       ans <- VariableScreening::screenIID(data$predictor, data$treatment, method = "SIRS")
-      supp <- (ans$rank <= 10)
+      supp <- (ans$rank <= 5)
     }
     dataTrain$predictor <- dataTrain$predictor[,supp]
     prediction <- predict(fit, newx = dataPredict, type='response', s=fit$lambda.min)
