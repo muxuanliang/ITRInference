@@ -39,7 +39,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
     res <- foreach(index=indexToTest,.packages = 'glmnet') %dopar%{
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
       pseudoOutcome <- itrFit$pseudoPredictor[,index]
-      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = FALSE, standardize = TRUE)
+      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
       betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))

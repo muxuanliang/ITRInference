@@ -82,7 +82,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
       pseudoOutcome <- itrFit$pseudoPredictor[,index]
       pseudoWeight <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link,loss_type)
-      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = FALSE, standardize = FALSE)
+      fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = intercept, standardize = FALSE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
       betaNULL <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
@@ -97,10 +97,10 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
     }
     stopCluster(cl)
     for (index in indexToTest){
-      fit_w[[index]] <- res[[index]]$fit_w
+      #fit_w[[index]] <- res[[index]]$fit_w
       score[index] <- res[[index]]$score
       sigma[index] <- res[[index]]$sigma
     }
   }
-  list(wFit = fit_w, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2)
+  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2)
 }

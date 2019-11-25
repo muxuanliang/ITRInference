@@ -89,7 +89,7 @@
 ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL,
                       outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL,
                       propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL,
-                      intercept=FALSE, test=TRUE, parallel=FALSE){
+                      intercept=FALSE, test=TRUE, indexToTest=c(1:8), parallel=FALSE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
@@ -102,8 +102,8 @@ ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logisti
                      outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, propensityModel = propensityModel,
                      propensityFormula = propensityFormula, intercept = intercept)
   if (test){
-    score_1 <- scoreTest(fit[[1]], parallel=parallel)
-    score_2 <- scoreTest(fit[[2]], parallel=parallel)
+    score_1 <- scoreTest(fit[[1]], indexToTest = indexToTest, parallel=parallel)
+    score_2 <- scoreTest(fit[[2]], indexToTest = indexToTest, parallel=parallel)
   }
   score <- (score_1$score+ score_2$score)/2
   sigma <- sqrt((score_1$sigma^2 + score_2$sigma^2)/2)
