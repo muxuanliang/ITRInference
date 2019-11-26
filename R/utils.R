@@ -40,13 +40,14 @@ ks <- function(xx, yy, xx.test){
   if (nrow(as.matrix(xx.test))==1) {
     yy.test <- wm(xx.test)
   } else {
-    yy.test<- array(0,c(nrow(as.matrix(xx.test)),1))
-    for (index in 1:nrow(as.matrix(xx.test))){
-      if (ncol((as.matrix(xx.test)))==1){
-        yy.test[index] <- wm(xx.test[index])
-      } else {
-        yy.test[index] <- wm(xx.test[index,])
-      }
+    if (ncol((as.matrix(xx.test)))==1){
+      yy.test <- sapply(as.matrix(xx.test), function(t){
+        wm(t)
+      })
+    } else {
+      yy.test <- apply(as.matrix(xx.test),1,function(t){
+        wm(t)
+      })
     }
   }
   yy.test
@@ -84,7 +85,7 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
     if ((method != 'lm')&&(method != 'glmnet')){
       ans1 <- screening(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = screeningMethod, family = outcomeScreeningFamily)
       ans2 <- screening(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = screeningMethod, family = outcomeScreeningFamily)
-      supp$control <- supp$treatment <- (ans1$rank <= 5)|(ans2$rank <= 5)
+      supp$control <- supp$treatment <- (ans1 <= 5)|(ans2 <= 5)
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
@@ -95,7 +96,7 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
     if ((method != 'lm')&&(method != 'glmnet')){
       ans1 <- screening(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = screeningMethod, family = outcomeScreeningFamily)
       ans2 <- screening(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = screeningMethod, family = outcomeScreeningFamily)
-      supp$control <- supp$treatment <- (ans1$rank <= 5)|(ans2$rank <= 5)
+      supp$control <- supp$treatment <- (ans1 <= 5)|(ans2 <= 5)
     }
     dataControl$predictor <- dataControl$predictor[,supp$control]
     dataTreatment$predictor <- dataTreatment$predictor[,supp$treatment]
@@ -165,16 +166,16 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
   if (0.05*size >= p){
     supp$control <- supp$treatment <- rep(TRUE, times = p)
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans <- screening(data$predictor, data$treatment, method = screeningMethod, family = 'Binomial')
-      supp <- (ans$rank <= 5)
+      ans <- screening(data$predictor, data$treatment, method = screeningMethod, family = 'binomial')
+      supp <- (ans <= 5)
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
     fit <- glmnet::cv.glmnet(x = dataTrain$predictor, y = dataTrain$treatment, family='binomial')
     supp <- abs(fit$glmnet.fit$beta[,fit$glmnet.fit$lambda==fit$lambda.min])>0
     if ((method != 'lm')&&(method != 'glmnet')){
-      ans <- screening(data$predictor, data$treatment, method = screeningMethod, family = 'Binomial')
-      supp <- (ans$rank <= 5)
+      ans <- screening(data$predictor, data$treatment, method = screeningMethod, family = 'binomial')
+      supp <- (ans <= 5)
     }
     dataTrain$predictor <- dataTrain$predictor[,supp]
     prediction <- predict(fit, newx = dataPredict, type='response', s=fit$lambda.min)
@@ -218,7 +219,7 @@ screening <- function(x, y, method='glmnet', family='Gaussian'){
     coef <- fit$glmnet.fit$beta[,fit$lambda==fit$lambda.min]
     supp <- order(abs(coef), decreasing = TRUE)
   } else {
-    fit <- ariableScreening::screenIID(x, y, method=method)
+    fit <- VariableScreening::screenIID(x, y, method=method)
     supp <- fit$rank
   }
   supp

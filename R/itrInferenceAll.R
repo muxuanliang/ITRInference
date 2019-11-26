@@ -107,10 +107,13 @@ ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logisti
   if (test){
     score_1 <- scoreTest(fit[[1]], indexToTest = indexToTest, parallel=parallel)
     score_2 <- scoreTest(fit[[2]], indexToTest = indexToTest, parallel=parallel)
+    score <- (score_1$score+ score_2$score)/2
+    sigma <- sqrt((score_1$sigma^2 + score_2$sigma^2)/2)
+    res <- list(fit =fit, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(size)*score/sigma))*2)
+  } else {
+    res <- list(fit = fit)
   }
-  score <- (score_1$score+ score_2$score)/2
-  sigma <- sqrt((score_1$sigma^2 + score_2$sigma^2)/2)
-  list(fit =fit, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(size)*score/sigma))*2)
+  res
 }
 
 
