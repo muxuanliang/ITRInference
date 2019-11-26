@@ -1,5 +1,5 @@
 # QLearnFit obtained the ITR by Q learning method.
-QLearnFit <- function(data, intercept=FALSE){
+QLearnFit <- function(data, intercept=FALSE, standardize = TRUE){
   size <- dim(data$predictor)[1]
   Outcome <- data$outcome
   Treatment <- (data$treatment - 0.5) * 2
@@ -7,7 +7,7 @@ QLearnFit <- function(data, intercept=FALSE){
   if(!intercept){
     pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), data$predictor)
   }
-  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = TRUE, standardize = TRUE)
+  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = TRUE, standardize = standardize)
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoTreatment = Treatment, pseudoOutcome = Outcome)
 }
 
@@ -40,12 +40,12 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
     cl <- makeCluster(min(10, n_cores))
     registerDoParallel(cl)
     res <- foreach(index=indexToTest,.packages = 'glmnet') %dopar%{
-      pseudoPredictor <- itrFit$pseudoPredictor[,-index]
-      pseudoOutcome <- itrFit$pseudoPredictor[,index]
+      pseudoPredictor <- qLearnFit$pseudoPredictor[,-index]
+      pseudoOutcome <- qLearnFit$pseudoPredictor[,index]
       fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
-      betaNULL <- array(itrFit$fit$glmnet.fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
+      betaNULL <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min],c(p,1))
       betaNULL[index,1] <- 0
       # get score under null
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]

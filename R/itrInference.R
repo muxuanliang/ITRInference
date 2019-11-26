@@ -1,11 +1,11 @@
 # ITRFit obtained the ITR. propensity is defined as p(T=1|X)
-ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE){
+ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE, screeningMethod = "SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
   }
   if (is.null(outcome)){
-    predictedOutcomeAll <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, Formula = outcomeFormula, predictAll = TRUE)
+    predictedOutcomeAll <- getOutcomeModel(data, method = outcomeModel, sampleSplitIndex = sampleSplitIndex, Formula = outcomeFormula, predictAll = TRUE, screeningMethod = screeningMethod, outcomeScreeningFamily = outcomeScreeningFamily)
   } else {
     predictedOutcomeAll <- NULL
     predictedOutcomeAll$control <- outcome$control
@@ -15,7 +15,7 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
   predictedOutcome$control <- predictedOutcomeAll$control[sampleSplitIndex]
   predictedOutcome$treatment <- predictedOutcomeAll$treatment[sampleSplitIndex]
   if (is.null(propensity)){
-    predictedPropensityAll <- getPropensityModel(data, method = propensityModel, sampleSplitIndex = sampleSplitIndex, Formula = propensityFormula, predictAll = TRUE)
+    predictedPropensityAll <- getPropensityModel(data, method = propensityModel, sampleSplitIndex = sampleSplitIndex, Formula = propensityFormula, predictAll = TRUE, screeningMethod = screeningMethod)
   } else {
     predictedPropensityAll <- propensity
   }
@@ -29,7 +29,10 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
   pseudoTreatment <- c(-sign(robustOutcome_control), sign(robustOutcome_treatment))
   pseudoWeight <- c(abs(robustOutcome_control), abs(robustOutcome_treatment))
   pseudoPredictor <- rbind(workingDataset$predictor, workingDataset$predictor)
-  pseudoPredictor <- scale(pseudoPredictor)
+  if(standardize){
+    pseudoPredictor <- scale(pseudoPredictor)
+  }
+
   # We standardize first and set glmnet to not standardize
   if (loss == 'logistic'){
     fit <- glmnet::glmnet(x=pseudoPredictor, y=as.factor(pseudoTreatment), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
