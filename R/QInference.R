@@ -3,8 +3,11 @@ QLearnFit <- function(data, intercept=FALSE){
   size <- dim(data$predictor)[1]
   Outcome <- data$outcome
   Treatment <- (data$treatment - 0.5) * 2
-  pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), data$predictor)
-  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = intercept, standardize = TRUE)
+  pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), Treatment, data$predictor)
+  if(!intercept){
+    pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), data$predictor)
+  }
+  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = TRUE, standardize = TRUE)
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoTreatment = Treatment, pseudoOutcome = Outcome)
 }
 
