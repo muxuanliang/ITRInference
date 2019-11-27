@@ -85,7 +85,9 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
     if ((method != 'lm')&&(method != 'glmnet')){
       ans1 <- screening(data$predictor[data$treatment==FALSE,], data$outcome[data$treatment==FALSE], method = screeningMethod, family = outcomeScreeningFamily)
       ans2 <- screening(data$predictor[data$treatment==TRUE,], data$outcome[data$treatment==TRUE], method = screeningMethod, family = outcomeScreeningFamily)
-      supp$control <- supp$treatment <- (ans1 <= 5)|(ans2 <= 5)
+      supp$control <- supp$treatment <- (ans1 <= floor(p/2))|(ans2 <= floor(p/2))
+      dataControl$predictor <- dataControl$predictor[,supp$control]
+      dataTreatment$predictor <- dataTreatment$predictor[,supp$treatment]
     }
   }
   if ((0.05*size < p) || (method == 'glmnet')) {
