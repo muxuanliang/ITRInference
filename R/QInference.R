@@ -18,6 +18,8 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
   fit_w <- NULL
   score <- rep(NA, times=length(indexToTest))
   sigma <- rep(NA, times=length(indexToTest))
+  betaAN <- rep(NA, times=length(indexToTest))
+  sigmaAN <- rep(NA, times=length(indexToTest))
   if (!parallel){
     for (index in indexToTest){
       pseudoPredictor <- qLearnFit$pseudoPredictor[,-index]
@@ -25,14 +27,22 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       fit_w[[index]] <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
       link_w <- predict(fit_w[[index]], newx = pseudoPredictor, s=fit_w[[index]]$lambda.min)
       # set beta null
-      betaNULL <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min], c(p,1))
+      betaEst <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min], c(p,1))
+      betaNULL <- betaEst
       betaNULL[index,1] <- 0
       # get score under null
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - linkNULL
-      tmp <- scoreWeight * (pseudoOutcome-link_w)
+      tmp <- -2*scoreWeight * (pseudoOutcome-link_w)
       score[index] <- mean(tmp)
+      # set betaAN
+      link <- qLearnFit$pseudoPredictor %*% betaEst + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
+      scoreWeight <- qLearnFit$pseudoOutcome - link
+      tmp <- -2 * scoreWeight * (pseudoOutcome-link_w)
+      I <- 2 * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN[index] <- betaEst[index]-mean(tmp)/(mean(I))
       sigma[index] <- sqrt(mean(tmp^2))
+      sigmaAN[index] <- sigma[index]/sqrt(mean(I))
     }
   } else {
     library(doParallel)
@@ -45,22 +55,32 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, intercept = intercept, standardize = TRUE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
-      betaNULL <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min],c(p,1))
+      betaEst <- array(qLearnFit$fit$glmnet.fit$beta[,qLearnFit$fit$lambda==qLearnFit$fit$lambda.min], c(p,1))
+      betaNULL <- betaEst
       betaNULL[index,1] <- 0
       # get score under null
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - linkNULL
-      tmp <- scoreWeight * (pseudoOutcome-link_w)
+      tmp <- -2 * scoreWeight * (pseudoOutcome-link_w)
       score <- mean(tmp)
+      # set betaAN
+      link <- qLearnFit$pseudoPredictor %*% betaEst + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
+      scoreWeight <- qLearnFit$pseudoOutcome - link
+      tmp <- -2 * scoreWeight * (pseudoOutcome-link_w)
+      I <- 2 * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN <- betaEst[index]-mean(tmp)/(mean(I))
       sigma <- sqrt(mean(tmp^2))
-      list(fit_w = fit_w, score=score, sigma=sigma)
+      sigmaAN <- sigma/sqrt(mean(I))
+      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
     for (index in indexToTest){
       fit_w[[index]] <- res[[index]]$fit_w
       score[index] <- res[[index]]$score
+      betaAN[index] <- res[[index]]$betaAN
       sigma[index] <- res[[index]]$sigma
+      sigmaAN[index] <- res[[index]]$sigmaAN
     }
   }
-  list(wFit = fit_w, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2)
+  list(wFit = fit_w, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, sigmaAN=sigmaAN)
 }

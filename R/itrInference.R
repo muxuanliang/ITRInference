@@ -59,6 +59,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
   fit_w <- NULL
   score <- rep(NA, times=length(indexToTest))
   sigma <- rep(NA, times=length(indexToTest))
+  betaAN <- rep(NA, times=length(indexToTest))
+  sigmaAN <- rep(NA, times=length(indexToTest))
   if (!parallel){
     for (index in indexToTest){
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
@@ -67,14 +69,22 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       fit_w[[index]] <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = intercept, standardize = FALSE)
       link_w <- predict(fit_w[[index]], newx = pseudoPredictor, s=fit_w[[index]]$lambda.min)
       # set beta null
-      betaNULL <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
+      betaEst <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
+      betaNULL <- betaEst
       betaNULL[index,1] <- 0
       # get score under null
       linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
-      scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL, loss_type) * itrFit$pseudoTreatment
+      scoreWeightNULL <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL, loss_type) * itrFit$pseudoTreatment
+      tmpNULL <- scoreWeightNULL * (pseudoOutcome-link_w)
+      score[index] <- mean(tmpNULL) * 2
+      # set betaAN
+      link <- itrFit$pseudoPredictor %*% betaEst + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
+      scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * link, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
-      score[index] <- mean(tmp) * 2
+      I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
+      sigmaAN[index] <- sigma[index]/sqrt(mean(I)*2)
     }
   } else {
     library(doParallel)
@@ -88,22 +98,32 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       fit_w <- glmnet::cv.glmnet(x=pseudoPredictor, y=pseudoOutcome, weights = pseudoWeight, intercept = intercept, standardize = FALSE)
       link_w <- predict(fit_w, newx = pseudoPredictor, s=fit_w$lambda.min)
       # set beta null
-      betaNULL <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min],c(p,1))
+      betaEst <- array(itrFit$fit$beta[,itrFit$fit$lambda==itrFit$fit$lambda.min], c(p,1))
+      betaNULL <- betaEst
       betaNULL[index,1] <- 0
       # get score under null
       linkNULL <- itrFit$pseudoPredictor %*% betaNULL + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
-      scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL,loss_type) * itrFit$pseudoTreatment
+      scoreWeightNULL <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * linkNULL, loss_type) * itrFit$pseudoTreatment
+      tmpNULL <- scoreWeightNULL * (pseudoOutcome-link_w)
+      score <- mean(tmpNULL) * 2
+      # get betaAN
+      link <- itrFit$pseudoPredictor %*% betaEst + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
+      scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * link, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
-      score <- mean(tmp) * 2
+      I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
-      list(fit_w = fit_w, score=score, sigma=sigma)
+      sigmaAN <- sigma/sqrt(mean(I)*2)
+      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
     for (index in indexToTest){
       #fit_w[[index]] <- res[[index]]$fit_w
       score[index] <- res[[index]]$score
       sigma[index] <- res[[index]]$sigma
+      betaAN[index] <- res[[index]]$betaAN
+      sigmaAN[index] <- res[[index]]$sigmaAN
     }
   }
-  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2)
+  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, sigmaAN=sigmaAN)
 }
