@@ -42,7 +42,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       I <- 2 * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN[index] <- betaEst[index]-mean(tmp)/(mean(I))
       sigma[index] <- sqrt(mean(tmp^2))
-      sigmaAN[index] <- sigma[index]/(mean(I))
+      sigmaAN[index] <- sigma[index]/sqrt(mean(I))
     }
   } else {
     library(doParallel)
@@ -70,7 +70,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       I <- 2 * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN <- betaEst[index]-mean(tmp)/(mean(I))
       sigma <- sqrt(mean(tmp^2))
-      sigmaAN <- sigma/(mean(I))
+      sigmaAN <- sigma/sqrt(mean(I))
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)

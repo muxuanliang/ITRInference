@@ -84,7 +84,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
-      sigmaAN[index] <- sigma[index]/(mean(I)*2)
+      sigmaAN[index] <- sigma[index]/sqrt(mean(I)*2)
     }
   } else {
     library(doParallel)
@@ -113,7 +113,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
-      sigmaAN <- sigma/(mean(I)*2)
+      sigmaAN <- sigma/sqrt(mean(I)*2)
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
