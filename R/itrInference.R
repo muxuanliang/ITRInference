@@ -85,6 +85,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       sigmaAN[index] <- sigma[index]/(mean(I)*2)
+
+      sigma[index] <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
     }
   } else {
     library(doParallel)
@@ -114,6 +116,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       betaAN <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
       sigma <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       sigmaAN <- sigma/(mean(I)*2)
+
+      sigma <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)

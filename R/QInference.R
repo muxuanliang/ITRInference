@@ -33,8 +33,8 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       # get score under null
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - linkNULL
-      tmp <- -2*scoreWeight * (pseudoOutcome-link_w)
-      score[index] <- mean(tmp)
+      tmpNULL <- -2*scoreWeight * (pseudoOutcome-link_w)
+      score[index] <- mean(tmpNULL)
       # set betaAN
       link <- qLearnFit$pseudoPredictor %*% betaEst + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - link
@@ -43,6 +43,8 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       betaAN[index] <- betaEst[index]-mean(tmp)/(mean(I))
       sigma[index] <- sqrt(mean(tmp^2))
       sigmaAN[index] <- sigma[index]/(mean(I))
+
+      sigma[index] <- sqrt(mean(tmpNULL^2))
     }
   } else {
     library(doParallel)
@@ -61,8 +63,8 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       # get score under null
       linkNULL <- qLearnFit$pseudoPredictor %*% betaNULL + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - linkNULL
-      tmp <- -2 * scoreWeight * (pseudoOutcome-link_w)
-      score <- mean(tmp)
+      tmpNULL <- -2 * scoreWeight * (pseudoOutcome-link_w)
+      score <- mean(tmpNULL)
       # set betaAN
       link <- qLearnFit$pseudoPredictor %*% betaEst + qLearnFit$fit$glmnet.fit$a0[qLearnFit$fit$lambda==qLearnFit$fit$lambda.min]
       scoreWeight <- qLearnFit$pseudoOutcome - link
@@ -71,6 +73,7 @@ scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), in
       betaAN <- betaEst[index]-mean(tmp)/(mean(I))
       sigma <- sqrt(mean(tmp^2))
       sigmaAN <- sigma/(mean(I))
+      sigma <- sqrt(mean(tmpNULL^2))
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
