@@ -87,6 +87,7 @@
 
 # ITRFitAll obtained the ITR. propensity is defined as p(T=1|X)
 ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL,
+                      type.measure = 'lossFun',
                       outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL,
                       propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL,
                       intercept=FALSE, test=TRUE, indexToTest=c(1:8), parallel=FALSE,
@@ -97,10 +98,12 @@ ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logisti
   }
   fit <- NULL
   fit[[1]] <- ITRFit(data = data, propensity = propensity, outcome = outcome, loss = loss, sampleSplitIndex = sampleSplitIndex,
+                     type.measure = type.measure,
                      outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, propensityModel = propensityModel,
                      propensityFormula = propensityFormula, intercept = intercept, screeningMethod = screeningMethod,
                      outcomeScreeningFamily = outcomeScreeningFamily, standardize = standardize)
   fit[[2]] <- ITRFit(data = data, propensity = propensity, outcome = outcome, loss = loss, sampleSplitIndex = (!sampleSplitIndex),
+                     type.measure = type.measure,
                      outcomeModel = outcomeModel, outcomeFormula = outcomeFormula, propensityModel = propensityModel,
                      propensityFormula = propensityFormula, intercept = intercept, screeningMethod = screeningMethod,
                      outcomeScreeningFamily = outcomeScreeningFamily, standardize = standardize)

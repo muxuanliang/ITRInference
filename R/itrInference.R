@@ -1,5 +1,5 @@
 # ITRFit obtained the ITR. propensity is defined as p(T=1|X)
-ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE, screeningMethod = "SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
+ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, type.measure = 'lossFun', outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE, screeningMethod = "SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
@@ -35,18 +35,39 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
 
   # We standardize first and set glmnet to not standardize
   if (loss == 'logistic'){
-    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.factor(pseudoTreatment), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
     validate <- predict(fit, newx = data$predictor[!sampleSplitIndex,])
-    cvm <- apply(validate, 2, function(t){
-      weight <- predictedPropensityAll[!sampleSplitIndex]*(t>=0) + (1-predictedPropensityAll[!sampleSplitIndex])*(t<0)
-      predictedOutcome <- NULL
-      predictedOutcome$control <- predictedOutcomeAll$control[!sampleSplitIndex]
-      predictedOutcome$treatment <- predictedOutcomeAll$treatment[!sampleSplitIndex]
-      augment <- predictedOutcome$control*(t<0) + predictedOutcome$treatment * (t>=0)
-      score <- mean(data$outcome[!sampleSplitIndex]/weight * (t * (data$treatment[!sampleSplitIndex]-0.5)>0) + augment)
-      score
-    })
-    fit$lambda.min <- fit$lambda[which.max(cvm)]
+    if (type.measure=='lossFun'){
+      cvm <- apply(validate, 2, function(t){
+        predictedOutcome <- NULL
+        predictedOutcome$control <- predictedOutcomeAll$control[!sampleSplitIndex]
+        predictedOutcome$treatment <- predictedOutcomeAll$treatment[!sampleSplitIndex]
+        predictedPropensity <- predictedPropensityAll[!sampleSplitIndex]
+        workingDataset <- list(predictor = data$predictor[!sampleSplitIndex,], treatment = data$treatment[!sampleSplitIndex], outcome = data$outcome[!sampleSplitIndex])
+        robustOutcome_control <- (workingDataset$treatment == FALSE) * (workingDataset$outcome-predictedOutcome$control) / (1-predictedPropensity) + predictedOutcome$control
+        robustOutcome_treatment <- (workingDataset$treatment == TRUE) * (workingDataset$outcome-predictedOutcome$treatment) / predictedPropensity + predictedOutcome$treatment
+        robustOutcome <- c(robustOutcome_control, robustOutcome_treatment)
+        pseudoTreatment <- c(-sign(robustOutcome_control), sign(robustOutcome_treatment))
+        pseudoWeight <- c(abs(robustOutcome_control), abs(robustOutcome_treatment))
+        pseudoLink <- c(t, t)
+        score <- mean(pseudoWeight*loss(pseudoTreatment * pseudoLink, loss_type='logistic'))
+        score
+      })
+      #fit.cv <- glmnet::cv.glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+      fit$lambda.min <- fit$lambda[which.min(cvm)]
+    } else {
+      cvm <- apply(validate, 2, function(t){
+        weight <- predictedPropensityAll[!sampleSplitIndex]*(t>=0) + (1-predictedPropensityAll[!sampleSplitIndex])*(t<0)
+        predictedOutcome <- NULL
+        predictedOutcome$control <- predictedOutcomeAll$control[!sampleSplitIndex]
+        predictedOutcome$treatment <- predictedOutcomeAll$treatment[!sampleSplitIndex]
+        augment <- predictedOutcome$control*(t<0) + predictedOutcome$treatment * (t>=0)
+        score <- mean(data$outcome[!sampleSplitIndex]/weight * (t * (data$treatment[!sampleSplitIndex]-0.5)>0) + augment)
+        score
+      })
+      fit$lambda.min <- fit$lambda[which.max(cvm)]
+    }
+
   }
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoWeight = pseudoWeight, pseudoTreatment = pseudoTreatment, sampleSplitIndex=sampleSplitIndex)
 }
