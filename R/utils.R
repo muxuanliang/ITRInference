@@ -194,7 +194,7 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
       if (screeningMethod == 'glmnet'){
         supp <- ans
       } else {
-        supp <- (ans <= 3)
+        supp <- (ans <= 5)
       }
     }
     dataTrain$predictor <- dataTrain$predictor[,supp]
@@ -224,7 +224,7 @@ getPropensityModel <- function(data, method=c('lm', 'glmnet', 'kernel'), sampleS
   } else if (method == 'kernel') {
     if (sum(supp) > 0){
       prediction <- ks(dataTrain$predictor, dataTrain$treatment, dataPredict)
-      prediction <- (prediction > 0.95) * 0.95 + (prediction < 0.05) * 0.05 + (prediction < 0.95) * (prediction > 0.05) * prediction
+      prediction <- (prediction > 0.9) * 0.9 + (prediction < 0.1) * 0.1 + (prediction < 0.9) * (prediction > 0.1) * prediction
     }
   }
   prediction
