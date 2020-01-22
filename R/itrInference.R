@@ -53,7 +53,6 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
         score <- mean(pseudoWeight*loss(pseudoTreatment * pseudoLink, loss_type='logistic'))
         score
       })
-      #fit.cv <- glmnet::cv.glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
       fit$lambda.min <- fit$lambda[which.min(cvm)]
     } else {
       cvm <- apply(validate, 2, function(t){
@@ -81,7 +80,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
   score <- rep(NA, times=length(indexToTest))
   sigma <- rep(NA, times=length(indexToTest))
   betaAN <- rep(NA, times=length(indexToTest))
-  sigmaAN <- rep(NA, times=length(indexToTest))
+  I <- rep(NA, times=length(indexToTest))
   if (!parallel){
     for (index in indexToTest){
       pseudoPredictor <- itrFit$pseudoPredictor[,-index]
@@ -102,10 +101,10 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       link <- itrFit$pseudoPredictor %*% betaEst + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * link, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
-      I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
-      betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
+      Itmp <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
       sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
-      sigmaAN[index] <- sigma[index]/(mean(I)*2)
+      I[index] <- (mean(Itmp)*2)
 
       sigma[index] <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
     }
@@ -150,5 +149,5 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       sigmaAN[index] <- res[[index]]$sigmaAN
     }
   }
-  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, sigmaAN=sigmaAN)
+  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I)
 }
