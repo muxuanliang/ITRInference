@@ -107,7 +107,7 @@ getOutcomeModel <- function(data, method=c('lm', 'glmnet', 'kernel', 'others'), 
         supp$control <- ans1
         supp$treatment <- ans2
       } else {
-        supp$control <- supp$treatment <- (ans1 <= 10)|(ans2 <= 10)
+        supp$control <- supp$treatment <- (ans1 <= 5)|(ans2 <= 5)
       }
     }
     dataControl$predictor <- dataControl$predictor[,supp$control]
