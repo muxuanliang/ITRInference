@@ -12,7 +12,7 @@ QLearnFit <- function(data, intercept=FALSE, standardize = TRUE){
 }
 
 # scoreTest get the score test for each covariate
-scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept=FALSE){
+scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept=TRUE){
   p <- dim(qLearnFit$pseudoPredictor)[2]
   n <- dim(qLearnFit$pseudoPredictor)[1]
   fit_w <- NULL
