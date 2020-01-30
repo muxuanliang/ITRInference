@@ -35,7 +35,10 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
 
   # We standardize first and set glmnet to not standardize
   if (loss == 'logistic'){
-    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+    fitInit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
+    lambdaInit <- max(fitInit$lambda)
+    lambdaSeq <- lambdaInit * (10/11)^(0:99)
+    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE, lambda = lambdaSeq)
     validate <- predict(fit, newx = data$predictor[!sampleSplitIndex,])
     if (type.measure=='lossFun'){
       cvm <- apply(validate, 2, function(t){
@@ -73,9 +76,9 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic')
 
 # scoreTest get the score test for each covariate
 scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest = c(1:8), intercept=FALSE){
-  link <- predict(itrFit$fit, newx = itrFit$pseudoPredictor, s=itrFit$fit$lambda.min)
   p <- dim(itrFit$pseudoPredictor)[2]
   n <- sum(itrFit$sampleSplitIndex)
+  link <- predict(itrFit$fit, newx = itrFit$pseudoPredictor, s=itrFit$fit$lambda.min)
   fit_w <- NULL
   score <- rep(NA, times=length(indexToTest))
   sigma <- rep(NA, times=length(indexToTest))
@@ -132,13 +135,13 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       link <- itrFit$pseudoPredictor %*% betaEst + itrFit$fit$a0[itrFit$fit$lambda==itrFit$fit$lambda.min]
       scoreWeight <- itrFit$pseudoWeight * derivative(itrFit$pseudoTreatment * link, loss_type) * itrFit$pseudoTreatment
       tmp <- scoreWeight * (pseudoOutcome-link_w)
-      I <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
-      betaAN <- betaEst[index]-mean(tmp) * 2/(mean(I)*2)
+      Itmp <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
+      betaAN <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
       sigma <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
-      sigmaAN <- sigma/(mean(I)*2)
+      I <- (mean(Itmp)*2)
 
       sigma <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
-      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
+      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, I=I)
     }
     stopCluster(cl)
     for (index in indexToTest){
@@ -146,7 +149,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       score[index] <- res[[index]]$score
       sigma[index] <- res[[index]]$sigma
       betaAN[index] <- res[[index]]$betaAN
-      sigmaAN[index] <- res[[index]]$sigmaAN
+      I[index] <- res[[index]]$I
     }
   }
   list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I)
