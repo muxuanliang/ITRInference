@@ -23,7 +23,7 @@ This package (function ITRFitAll) implements the EARL estimation for individuali
 
 # Example
 
-## Generate data
+### Generate data
 
 n <- 500
 
@@ -47,15 +47,15 @@ e <- rnorm(n)
 
 y <- main_effect + sign(trt - 0.5) * interact_effect + e
 
-## Set up training data
+### Set up training data
 
 dataTrain <- list(predictor = x, treatment = (trt > 0), outcome = y)
 
-## Fit our approach
+### Fit our approach
 
 fit_itrAll <- ITRFitAll(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
 
-## Compare with q-learning and implement standard de-correlated score for q-learning
+### Compare with q-learning and implement standard de-correlated score for q-learning
 
 fit_qlearn <- QLearnFit(data = dataTrain, intercept = TRUE)
 
