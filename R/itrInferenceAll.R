@@ -1,16 +1,28 @@
-#' Estimation and inference for itr using pooled-and-split de-correlated score
+#' Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score
 #'
 #' This function
 #'
 #' @param data A list - list(predictor = x, treatment = trt, outcome = y)), where x is the covariate matrix, trt is 0 or 1 (1 indicates treatment), y is the outcome.
+#' @param propensity estimated propensity score p(trt=1|X). This should be used only when the propensity is estimated by a parametric model.
+#' @param outcome stimated outcome model E(y|trt, X). This should be used only when the outcome is estimated by a parametric model. It should be a list (list(control=..., treatment=...)).
+#' @param outcomeModel this selects method to estimate the outcome when outcome=NULL. Options include lm, glmnet, kernel, and gam. If lm is used, user also need to input the outcomeFormula like y~x used in lm. By default, kernel regression is selected.
+#' @param propensityModel Similar to outcomeModel.
+#' @param intercept includes intercept or not
+#' @param test whether return p-value and sd estimation.
+#' @param indexToTest indicates which coefficients to test. By default, c(1:8)
+#' @param parallel whether use parallel computing; by default, FALSE.
+#' @param screeningMethod when dimension is high, this selects method to preform variable screening for outcomeModel and propensityModel fitting. Methods in VariableScreening package are available.
+#' @param standardize whether standardize the input covariant matrix.
 #' @return A matrix of the infile
+#' @author Muxuan Liang <mliang@fredhutch.org>
+#' @references To be added
+#' @example
 #' @export
 
-# ITRFitAll returns the pooled data-split de-correlated score. propensity is defined as p(T=1|X)
 ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', sampleSplitIndex=NULL,
                       type.measure = 'lossFun',
-                      outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL,
-                      propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL,
+                      outcomeModel='kernel', outcomeFormula = NULL,
+                      propensityModel='kernel', propensityFormula = NULL,
                       intercept=FALSE, test=TRUE, indexToTest=c(1:8), parallel=FALSE,
                       screeningMethod="SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
   size <- dim(data$predictor)[1]
