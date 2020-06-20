@@ -1,11 +1,13 @@
 Package: ITRInference
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Estimation and inference of individualized treamtent rule using pooled-and-split de-correlated score
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Muxuan Liang <mliang@fredhutch.org>
+Maintainer: Muxuan Liang <mliang@fredhutch.org>
+Description: The package implements a doubly robust estimation for individualized treatment rule (ITR). User can choose bespoke methods to estimate outcome model and propensity. The package also provides a variaty of methods to estimate these nuisance parameters. It also returns the p-values and CI for the ITR using a pooled-and-split de-correlated score.
+License: GPL-3
+Imports: glmnet,
+         VariableScreening,
+         mgcv
 Encoding: UTF-8
 LazyData: true

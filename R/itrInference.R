@@ -145,7 +145,6 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
     }
     stopCluster(cl)
     for (index in indexToTest){
-      #fit_w[[index]] <- res[[index]]$fit_w
       score[index] <- res[[index]]$score
       sigma[index] <- res[[index]]$sigma
       betaAN[index] <- res[[index]]$betaAN

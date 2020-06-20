@@ -1,4 +1,3 @@
-
 # loss gets the loss of the chosen loss
 loss <- function(x, loss_type){
   switch(loss_type,
