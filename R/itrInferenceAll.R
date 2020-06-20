@@ -1,5 +1,13 @@
+#' Estimation and inference for itr using pooled-and-split de-correlated score
+#'
+#' This function
+#'
+#' @param data A list - list(predictor = x, treatment = trt, outcome = y)), where x is the covariate matrix, trt is 0 or 1 (1 indicates treatment), y is the outcome.
+#' @return A matrix of the infile
+#' @export
+
 # ITRFitAll returns the pooled data-split de-correlated score. propensity is defined as p(T=1|X)
-ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL,
+ITRFitAll <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', sampleSplitIndex=NULL,
                       type.measure = 'lossFun',
                       outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL,
                       propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL,

@@ -1,5 +1,5 @@
 # ITRFit obtained the ITR. propensity is defined as p(T=1|X)
-ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = c('logistic'), sampleSplitIndex=NULL, type.measure = 'lossFun', outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE, screeningMethod = "SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
+ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', sampleSplitIndex=NULL, type.measure = 'lossFun', outcomeModel=c('lm', 'glmnet', 'kernel', 'others'), outcomeFormula = NULL, propensityModel=c('lm', 'glmnet', 'kernel'), propensityFormula = NULL, intercept=FALSE, screeningMethod = "SIRS", outcomeScreeningFamily = 'Gaussian', standardize = TRUE){
   size <- dim(data$predictor)[1]
   if(is.null(sampleSplitIndex)){
     sampleSplitIndex <- (rnorm(size) > 0)
