@@ -32,10 +32,10 @@
 #' # set up training data
 #' dataTrain <- list(predictor = x, treatment = (trt > 0), outcome = y)
 #' # fit our approach
-#' fit_itrAll <- ITRFitInfer(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
+#' infer_itr <- ITRFitInfer(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
 #' # compare with q-learning and implement standard de-correlated score for q0learning
 #' fit_qlearn <- QLearnFit(data = dataTrain, intercept = TRUE)
-#' score_qlearn <- QFitInfer(fit_qlearn, parallel=FALSE)
+#' infer_qlearn <- QFitInfer(fit_qlearn, parallel=FALSE)
 #' @export
 
 ITRFitInfer <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', sampleSplitIndex=NULL,
