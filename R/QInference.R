@@ -1,18 +1,16 @@
-# QLearnFit obtained the ITR by Q learning method.
-QLearnFit <- function(data, intercept=FALSE, standardize = TRUE){
-  size <- dim(data$predictor)[1]
-  Outcome <- data$outcome
-  Treatment <- (data$treatment - 0.5) * 2
-  pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), Treatment, data$predictor)
-  if(!intercept){
-    pseudoPredictor <- cbind(apply(data$predictor,2,function(t){t*Treatment}), data$predictor)
-  }
-  fit <- glmnet::cv.glmnet(x=pseudoPredictor, y=Outcome, family='gaussian', intercept = TRUE, standardize = standardize)
-  list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoTreatment = Treatment, pseudoOutcome = Outcome)
-}
-
-# scoreTest get the score test for each covariate
-scoreTestQLearn <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept=TRUE){
+#' Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score
+#' 
+#' This function implements the Q-learning estimation for individualized treatment rule and the inference procedure based on the de-correlated score (see reference).
+#'
+#' @param qLearnFit returns of \code{QLearnFit}
+#' @param intercept includes intercept or not
+#' @param indexToTest indicates which coefficients to test. By default, c(1:8)
+#' @param parallel whether use parallel computing; by default, FALSE.
+#' @return p-values are the p-value for each coefficients included in indexToTest. (betaAN-1.96*sigmaAN/sqrt(sample size), betaAN+1.96*sigmaAN/sqrt(sample size)) provides the 95\% CI for the coefficients.
+#' @author Muxuan Liang <mliang@fredhutch.org>
+#' @references Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score.
+#' @export
+QFitInfer <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept=TRUE){
   p <- dim(qLearnFit$pseudoPredictor)[2]
   n <- dim(qLearnFit$pseudoPredictor)[1]
   fit_w <- NULL
