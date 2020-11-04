@@ -62,4 +62,4 @@ fit_qlearn <- QLearnFit(data = dataTrain, intercept = TRUE)
 score_qlearn <- scoreTestQLearn(fit_qlearn, parallel=FALSE)
 
 # References
-Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score. 
+Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score. [arXiv](https://arxiv.org/abs/2007.04445)
