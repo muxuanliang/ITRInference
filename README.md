@@ -53,13 +53,13 @@ dataTrain <- list(predictor = x, treatment = (trt > 0), outcome = y)
 
 ### Fit our approach
 
-fit_itrAll <- ITRFitAll(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
+infer_itr <- ITRFitInfe(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
 
 ### Compare with q-learning and implement standard de-correlated score for q-learning
 
 fit_qlearn <- QLearnFit(data = dataTrain, intercept = TRUE)
 
-score_qlearn <- scoreTestQLearn(fit_qlearn, parallel=FALSE)
+infer_qlearn <- QFitInfer(fit_qlearn, parallel=FALSE)
 
 # References
 Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score. [arXiv](https://arxiv.org/abs/2007.04445)
