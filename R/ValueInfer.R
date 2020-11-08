@@ -4,7 +4,7 @@
 #'
 #' @param data A list - list(predictor = x, treatment = trt, outcome = y)), where x is the covariate matrix, trt is 0 or 1 (1 indicates treatment), y is the outcome.
 #' @param method method can be either 'ITRFit'  or 'QLearn'.
-#' @param trainingfrac determines the traning sample size by \code{floor}(total sample size * \cide{trainingfrac}).
+#' @param trainingfrac determines the traning sample size by \code{floor}(total sample size * \code{trainingfrac}).
 #' @param resamplingIter determines how many resamplings. By default, it is 1000.
 #' @param ... Other parameters in \code{ITRFitInfer} and \code{QLearnFit}
 #' @return A list
