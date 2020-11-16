@@ -2,7 +2,7 @@
 % Please edit documentation in R/ITRInference.R
 \name{ITRFitInfer}
 \alias{ITRFitInfer}
-\title{Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score}
+\title{This function implements the PEARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).}
 \usage{
 ITRFitInfer(
   data,
@@ -51,7 +51,7 @@ ITRFitInfer(
 fit is estimated coefficient for ITR on two split datasets. p-values are the p-value for each coefficients included in indexToTest. (betaAN-1.96*sigmaAN/sqrt(sample size), betaAN+1.96*sigmaAN/sqrt(sample size)) provides the 95\% CI for the coefficients.
 }
 \description{
-This function implements the EARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).
+This function implements the PEARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).
 }
 \examples{
 # generate data

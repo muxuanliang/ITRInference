@@ -2,7 +2,7 @@
 % Please edit documentation in R/QLearnFit.R
 \name{QLearnFit}
 \alias{QLearnFit}
-\title{Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score}
+\title{This function implements the Q-learning estimation for individualized treatment rule and the inference procedure based on the de-correlated score (see reference).}
 \usage{
 QLearnFit(data, intercept = FALSE, standardize = TRUE)
 }
