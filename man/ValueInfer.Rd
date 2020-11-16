@@ -2,13 +2,13 @@
 % Please edit documentation in R/ValueInfer.R
 \name{ValueInfer}
 \alias{ValueInfer}
-\title{Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score}
+\title{This function implements the inference for value of individualized treatment rule.}
 \usage{
 ValueInfer(
   data,
   method = "ITRFit",
   trainingfrac = 0.5 * log(NROW(data$predictor)),
-  resamplingIter = 1000,
+  resamplingIter = 2000,
   ...
 )
 }
@@ -33,7 +33,7 @@ A list
 }
 }
 \description{
-This function implements the EARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).
+This function implements the inference for value of individualized treatment rule.
 }
 \references{
 Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score.

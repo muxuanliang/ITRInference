@@ -1,6 +1,4 @@
-#' Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score
-#'
-#' This function implements the EARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).
+#' This function implements the PEARL estimation for individualized treatment rule and the inference procedure based on the pooled-and-split de-correlated score (see reference).
 #'
 #' @param data A list - list(predictor = x, treatment = trt, outcome = y)), where x is the covariate matrix, trt is 0 or 1 (1 indicates treatment), y is the outcome.
 #' @param propensity estimated propensity score p(trt=1|X). This should be used only when the propensity is estimated by a parametric model.

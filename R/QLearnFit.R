@@ -1,5 +1,3 @@
-#' Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score
-#' 
 #' This function implements the Q-learning estimation for individualized treatment rule and the inference procedure based on the de-correlated score (see reference).
 #'
 #' @param data A list - list(predictor = x, treatment = trt, outcome = y)), where x is the covariate matrix, trt is 0 or 1 (1 indicates treatment), y is the outcome.

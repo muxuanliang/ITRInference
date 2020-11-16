@@ -2,7 +2,7 @@
 % Please edit documentation in R/QInference.R
 \name{QFitInfer}
 \alias{QFitInfer}
-\title{Estimation and inference for individualized treatment rule using pooled-and-split de-correlated score}
+\title{This function implements the inference for Q-learning estimation (see reference).}
 \usage{
 QFitInfer(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept = TRUE)
 }
@@ -19,7 +19,7 @@ QFitInfer(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercept = TRUE)
 p-values are the p-value for each coefficients included in indexToTest. (betaAN-1.96*sigmaAN/sqrt(sample size), betaAN+1.96*sigmaAN/sqrt(sample size)) provides the 95\% CI for the coefficients.
 }
 \description{
-This function implements the Q-learning estimation for individualized treatment rule and the inference procedure based on the de-correlated score (see reference).
+This function implements the inference for Q-learning estimation (see reference).
 }
 \references{
 Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score.
