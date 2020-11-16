@@ -27,7 +27,7 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
     check_balance <- FALSE
     while(!check_balance){
       training_index <- sample(index_seq, floor(totalSampleSize*1/trainingfrac))
-      check_balance <- (sum(data$treatment[training_index]) > 25) & (sum(data$treatment[training_index]) < (length(training_index)-25))
+      check_balance <- (sum(data$treatment[training_index]) > 5) & (sum(data$treatment[training_index]) < (length(training_index)-5))
     }
     testing_index <- setdiff(index_seq, training_index)
     data_train <- list(predictor = data$predictor[training_index,], treatment = data$treatment[training_index], outcome=data$outcome[training_index])
