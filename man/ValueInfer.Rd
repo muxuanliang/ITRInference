@@ -17,7 +17,7 @@ ValueInfer(
 
 \item{method}{method can be either 'ITRFit'  or 'QLearn'.}
 
-\item{trainingfrac}{determines the traning sample size by \code{floor}(total sample size * \cide{trainingfrac}).}
+\item{trainingfrac}{determines the traning sample size by \code{floor}(total sample size * \code{trainingfrac}).}
 
 \item{resamplingIter}{determines how many resamplings. By default, it is 1000.}
 
