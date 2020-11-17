@@ -16,7 +16,8 @@
 #' @references Muxuan Liang, Young-Geun Choi, Yang Ning, Maureen Smith, Yingqi Zhao (2020). Estimation and inference on high-dimensional individualized treatment rule in observational data using split-and-pooled de-correlated score.
 #' @export
 
-ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$predictor)), resamplingIter = 2000, ...){
+ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$predictor)), resamplingIter = 2000, propensity = NULL,
+                       outcome = NULL, ...){
   totalSampleSize <- NROW(data$predictor)
   numberPredictor <- NCOL(data$predictor)
   index_seq <- c(1:totalSampleSize)
@@ -31,19 +32,32 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
     data_train <- list(predictor = data$predictor[training_index,], treatment = data$treatment[training_index], outcome=data$outcome[training_index])
     stopifnot(method %in% c('ITRFit', 'QLearn'))
     if (method == 'ITRFit'){
-      fit <- ITRFitInfer(data_train, test=FALSE,...)
+      fit <- ITRFitInfer(data_train, test=FALSE,propensity = propensity[training_index],
+                         outcome = list(treatment=outcome$treatment[training_index], control=outcome$control[training_index]),...)
       predictedTreatment <- sign(predict(fit$fit[[1]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[1]]$fit$lambda.min)+predict(fit$fit[[2]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[2]]$fit$lambda.min))
     } else if (method =='QLearn') {
       fit <- QLearnFit(data_train,...)
       predictedTreatment <- sign(data$predictor[testing_index,] %*% fit$fit$glmnet.fit$beta[1:numberPredictor,fit$fit$lambda==fit$fit$lambda.min])
     }
     tmp_training_index <- (index_seq %in% training_index)
-    predictedOutcomeAll <- getOutcomeModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
-    predictedOutcome <- NULL
-    predictedOutcome$control <- predictedOutcomeAll$control[!tmp_training_index]
-    predictedOutcome$treatment <- predictedOutcomeAll$treatment[!tmp_training_index]
-    predictedPropensityAll <- getPropensityModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
-    predictedPropensity <- predictedPropensityAll[!tmp_training_index]
+
+    if(is.null(outcome)){
+      predictedOutcomeAll <- getOutcomeModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
+      predictedOutcome <- NULL
+      predictedOutcome$control <- predictedOutcomeAll$control[!tmp_training_index]
+      predictedOutcome$treatment <- predictedOutcomeAll$treatment[!tmp_training_index]
+    } else {
+      predictedOutcome <- NULL
+      predictedOutcome$control <- outcome$control[!tmp_training_index]
+      predictedOutcome$treatment <- outcome$treatment[!tmp_training_index]
+    }
+    if(is.null(propensity)){
+      predictedPropensityAll <- getPropensityModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
+      predictedPropensity <- predictedPropensityAll[!tmp_training_index]
+    } else {
+      predictedPropensity <- propensity[!tmp_training_index]
+    }
+
     aipw_tmp <- rep(NA, totalSampleSize)
     aipw_tmp[testing_index] <- (predictedTreatment==sign(data$treatment[testing_index]-0.5))/(predictedPropensity*data$treatment[testing_index]+(1-predictedPropensity)*(1-data$treatment[testing_index]))*(data$outcome[testing_index]-data$treatment[testing_index]*predictedOutcome$treatment-(1-data$treatment[testing_index])*predictedOutcome$control)+
       (predictedTreatment>0)*predictedOutcome$treatment+(predictedTreatment<0)*predictedOutcome$control
