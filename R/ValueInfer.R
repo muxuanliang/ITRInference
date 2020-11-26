@@ -32,8 +32,16 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
     data_train <- list(predictor = data$predictor[training_index,], treatment = data$treatment[training_index], outcome=data$outcome[training_index])
     stopifnot(method %in% c('ITRFit', 'QLearn'))
     if (method == 'ITRFit'){
-      fit <- ITRFitInfer(data_train, test=FALSE,propensity = propensity[training_index],
-                         outcome = list(treatment=outcome$treatment[training_index], control=outcome$control[training_index]),...)
+      propensity.train <- NULL
+      outcome.train <- NULL
+      if(!is.null(propensity)){
+        propensity.train <- propensity[training_index]
+      }
+      if(!is.null(outcome)){
+        outcome.train <- list(treatment=outcome$treatment[training_index], control=outcome$control[training_index])
+      }
+      fit <- ITRFitInfer(data_train, test=FALSE,propensity = propensity.train,
+                         outcome = outcome.train,...)
       predictedTreatment <- sign(predict(fit$fit[[1]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[1]]$fit$lambda.min)+predict(fit$fit[[2]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[2]]$fit$lambda.min))
     } else if (method =='QLearn') {
       fit <- QLearnFit(data_train,...)
