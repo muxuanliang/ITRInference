@@ -25,7 +25,7 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
   for(iter in 1:resamplingIter){
     check_balance <- FALSE
     while(!check_balance){
-      training_index <- sample(index_seq, floor(totalSampleSize*1/trainingfrac))
+      training_index <- sample(index_seq, floor(totalSampleSize/trainingfrac))
       check_balance <- (sum(data$treatment[training_index]) > 5) & (sum(data$treatment[training_index]) < (length(training_index)-5))
     }
     testing_index <- setdiff(index_seq, training_index)
@@ -50,7 +50,7 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
     tmp_training_index <- (index_seq %in% training_index)
 
     if(is.null(outcome)){
-      predictedOutcomeAll <- getOutcomeModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
+      predictedOutcomeAll <- getOutcomeModel(data, method = 'kernel', sampleSplitIndex = (!tmp_training_index), predictAll = TRUE, screeningMethod = "SIRS")
       predictedOutcome <- NULL
       predictedOutcome$control <- predictedOutcomeAll$control[!tmp_training_index]
       predictedOutcome$treatment <- predictedOutcomeAll$treatment[!tmp_training_index]
@@ -60,7 +60,7 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
       predictedOutcome$treatment <- outcome$treatment[!tmp_training_index]
     }
     if(is.null(propensity)){
-      predictedPropensityAll <- getPropensityModel(data, method = 'kernel', sampleSplitIndex = tmp_training_index, predictAll = TRUE, screeningMethod = "SIRS")
+      predictedPropensityAll <- getPropensityModel(data, method = 'kernel', sampleSplitIndex = (!tmp_training_index), predictAll = TRUE, screeningMethod = "SIRS")
       predictedPropensity <- predictedPropensityAll[!tmp_training_index]
     } else {
       predictedPropensity <- propensity[!tmp_training_index]
