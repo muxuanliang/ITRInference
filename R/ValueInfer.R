@@ -45,7 +45,7 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
       predictedTreatment <- sign(predict(fit$fit[[1]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[1]]$fit$lambda.min)+predict(fit$fit[[2]]$fit, newx = data$predictor[testing_index,], s = fit$fit[[2]]$fit$lambda.min))
     } else if (method =='QLearn') {
       fit <- QLearnFit(data_train,...)
-      predictedTreatment <- sign(data$predictor[testing_index,] %*% fit$fit$glmnet.fit$beta[1:numberPredictor,fit$fit$lambda==fit$fit$lambda.min])
+      predictedTreatment <- sign(data$predictor[testing_index,] %*% fit$fit$glmnet.fit$beta[1:numberPredictor,fit$fit$lambda==fit$fit$lambda.min]+fit$fit$glmnet.fit$a0[fit$fit$lambda==fit$fit$lambda.min])
     }
     tmp_training_index <- (index_seq %in% training_index)
 
@@ -65,8 +65,8 @@ ValueInfer <- function(data, method = 'ITRFit', trainingfrac=0.5*log(NROW(data$p
     } else {
       predictedPropensity <- propensity[!tmp_training_index]
     }
-
     aipw_tmp <- rep(NA, totalSampleSize)
+    predictedTreatment[predictedTreatment==0] <- 1
     aipw_tmp[testing_index] <- (predictedTreatment==sign(data$treatment[testing_index]-0.5))/(predictedPropensity*data$treatment[testing_index]+(1-predictedPropensity)*(1-data$treatment[testing_index]))*(data$outcome[testing_index]-data$treatment[testing_index]*predictedOutcome$treatment-(1-data$treatment[testing_index])*predictedOutcome$control)+
       (predictedTreatment>0)*predictedOutcome$treatment+(predictedTreatment<0)*predictedOutcome$control
     aipw <- cbind(aipw, aipw_tmp)
