@@ -38,7 +38,7 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', s
     fitInit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
     lambdaInit <- max(fitInit$lambda)
     lambdaSeq <- lambdaInit * (10/11)^(0:99)
-    fit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE, lambda = lambdaSeq)
+    fit <- fitInit #glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE, lambda = lambdaSeq)
     validate <- predict(fit, newx = data$predictor[!sampleSplitIndex,])
     if (type.measure=='lossFun'){
       cvm <- apply(validate, 2, function(t){
@@ -69,7 +69,6 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', s
       })
       fit$lambda.min <- fit$lambda[which.max(cvm)]
     }
-    
   }
   list(fit=fit, pseudoPredictor = pseudoPredictor, pseudoWeight = pseudoWeight, pseudoTreatment = pseudoTreatment, sampleSplitIndex=sampleSplitIndex)
 }
