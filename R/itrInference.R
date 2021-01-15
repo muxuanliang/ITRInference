@@ -63,9 +63,9 @@ ITRFitInfer <- function(data, propensity = NULL, outcome = NULL, loss = 'logisti
     score <- (score_1$score+ score_2$score)/2
     betaAN <- (score_1$betaAN + score_2$betaAN)/2
     sigma <- sqrt((score_1$sigma^2 + score_2$sigma^2)/2)
+    sigmaAN <- sqrt((score_1$sigmaAN^2 + score_2$sigmaAN^2)/2)
     I <- (score_1$I+score_2$I)/2
-    sigmaAN <- sigma/I
-    res <- list(fit =fit, pvalue=pnorm(-abs(sqrt(size)*score/sigma))*2, betaAN=betaAN, sigmaAN=sigmaAN)
+    res <- list(fit =fit, pvalue=pnorm(-abs(sqrt(size)*score/sigmaAN))*2, betaAN=betaAN, sigmaAN=sigmaAN/I)
   } else {
     res <- list(fit = fit)
   }

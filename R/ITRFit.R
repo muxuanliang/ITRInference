@@ -81,6 +81,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
   fit_w <- NULL
   score <- rep(NA, times=length(indexToTest))
   sigma <- rep(NA, times=length(indexToTest))
+  sigmaAN <- rep(NA, times=length(indexToTest))
   betaAN <- rep(NA, times=length(indexToTest))
   I <- rep(NA, times=length(indexToTest))
   if (!parallel){
@@ -105,7 +106,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       tmp <- scoreWeight * (pseudoOutcome-link_w)
       Itmp <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
-      sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
+      sigmaAN[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       I[index] <- (mean(Itmp)*2)
       
       sigma[index] <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
@@ -136,19 +137,20 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       tmp <- scoreWeight * (pseudoOutcome-link_w)
       Itmp <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
-      sigma <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
+      sigmaAN <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       I <- (mean(Itmp)*2)
       
       sigma <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
-      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, I=I)
+      list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, I=I, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
     for (index in indexToTest){
       score[index] <- res[[index]]$score
       sigma[index] <- res[[index]]$sigma
       betaAN[index] <- res[[index]]$betaAN
+      sigmaAN[index] <- res[[index]]$sigmaAN
       I[index] <- res[[index]]$I
     }
   }
-  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I)
+  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I, sigmaAN=sigmaAN)
 }
