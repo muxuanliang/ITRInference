@@ -20,9 +20,9 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', s
     predictedPropensityAll <- propensity
   }
   predictedPropensity <- predictedPropensityAll[sampleSplitIndex]
-  
+
   workingDataset <- list(predictor = data$predictor[sampleSplitIndex,], treatment = data$treatment[sampleSplitIndex], outcome = data$outcome[sampleSplitIndex])
-  
+
   robustOutcome_control <- (workingDataset$treatment == FALSE) * (workingDataset$outcome-predictedOutcome$control) / (1-predictedPropensity) + predictedOutcome$control
   robustOutcome_treatment <- (workingDataset$treatment == TRUE) * (workingDataset$outcome-predictedOutcome$treatment) / predictedPropensity + predictedOutcome$treatment
   robustOutcome <- c(robustOutcome_control, robustOutcome_treatment)
@@ -32,7 +32,7 @@ ITRFit <- function(data, propensity = NULL, outcome = NULL, loss = 'logistic', s
   if(standardize){
     pseudoPredictor <- scale(pseudoPredictor)
   }
-  
+
   # We standardize first and set glmnet to not standardize
   if (loss == 'logistic'){
     fitInit <- glmnet::glmnet(x=pseudoPredictor, y=as.numeric(pseudoTreatment==1), weights=pseudoWeight, family='binomial', intercept = intercept, standardize = FALSE)
@@ -106,10 +106,8 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       tmp <- scoreWeight * (pseudoOutcome-link_w)
       Itmp <- itrFit$pseudoWeight * hessian(itrFit$pseudoTreatment * link, loss_type) * pseudoOutcome * (pseudoOutcome - link_w)
       betaAN[index] <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
-      sigmaAN[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
+      sigma[index] <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       I[index] <- (mean(Itmp)*2)
-      
-      sigma[index] <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
     }
   } else {
     library(doParallel)
@@ -139,7 +137,7 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       betaAN <- betaEst[index]-mean(tmp) * 2/(mean(Itmp)*2)
       sigmaAN <- sqrt(mean((tmp[1:n]+tmp[(n+1):(2*n)])^2))
       I <- (mean(Itmp)*2)
-      
+
       sigma <- sqrt(mean((tmpNULL[1:n]+tmpNULL[(n+1):(2*n)])^2))
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, I=I, sigmaAN=sigmaAN)
     }
@@ -152,5 +150,5 @@ scoreTest <- function(itrFit, loss_type='logistic', parallel = TRUE, indexToTest
       I[index] <- res[[index]]$I
     }
   }
-  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I, sigmaAN=sigmaAN)
+  list(score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, I=I)
 }

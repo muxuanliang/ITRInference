@@ -39,8 +39,6 @@ QFitInfer <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercep
       betaAN[index] <- betaEst[index]-mean(tmp)/(mean(I))
       sigma[index] <- sqrt(mean(tmp^2))
       sigmaAN[index] <- sigma[index]/(mean(I))
-
-      sigma[index] <- sqrt(mean(tmpNULL^2))
     }
   } else {
     library(doParallel)
@@ -69,7 +67,6 @@ QFitInfer <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercep
       betaAN <- betaEst[index]-mean(tmp)/(mean(I))
       sigma <- sqrt(mean(tmp^2))
       sigmaAN <- sigma/(mean(I))
-      sigma <- sqrt(mean(tmpNULL^2))
       list(fit_w = fit_w, score=score, sigma=sigma, betaAN=betaAN, sigmaAN=sigmaAN)
     }
     stopCluster(cl)
@@ -81,5 +78,5 @@ QFitInfer <- function(qLearnFit, parallel = TRUE, indexToTest = c(1:8), intercep
       sigmaAN[index] <- res[[index]]$sigmaAN
     }
   }
-  list(wFit = fit_w, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigmaAN))*2, betaAN=betaAN, sigmaAN=sigmaAN)
+  list(wFit = fit_w, score = score, sigma=sigma, pvalue=pnorm(-abs(sqrt(n)*score/sigma))*2, betaAN=betaAN, sigmaAN=sigmaAN)
 }
