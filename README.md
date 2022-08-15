@@ -44,7 +44,7 @@ dataTrain <- list(predictor = x, treatment = (trt > 0), outcome = y)
 
 ### Fit our approach
 
-infer_itr <- ITRFitInfe(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
+infer_itr <- ITRFitInfer(data = dataTrain, outcomeModel = 'kernel', propensityModel = 'kernel')
 
 ### Compare with q-learning and implement standard de-correlated score for q-learning
 
